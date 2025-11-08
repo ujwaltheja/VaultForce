@@ -64,6 +64,7 @@ export default class PipelineBoard extends LightningElement {
             // Add status class and canPromote flag to each artifact
             this.artifacts.forEach((artifact, index) => {
                 artifact.statusClass = this.getStatusClass(artifact.Status__c);
+                artifact.statusBadgeClass = this.getStatusBadgeClass(artifact.Status__c);
                 const stageIndex = this.stages.indexOf(artifact.Stage__c);
                 artifact.canPromote = stageIndex < this.stages.length - 1 &&
                     (artifact.Status__c === 'Validation Passed' || artifact.Status__c === 'Approved');
@@ -73,7 +74,9 @@ export default class PipelineBoard extends LightningElement {
             this.stageData = this.stages.map(stage => ({
                 name: stage,
                 count: this.artifacts.filter(a => a.Stage__c === stage).length,
-                artifacts: this.artifacts.filter(a => a.Stage__c === stage)
+                artifacts: this.artifacts.filter(a => a.Stage__c === stage),
+                columnClass: this.getColumnClass(stage),
+                headerClass: this.getHeaderClass(stage)
             }));
 
             this.isLoading = false;
@@ -102,6 +105,33 @@ export default class PipelineBoard extends LightningElement {
             default:
                 return 'slds-badge slds-badge_lightest';
         }
+    }
+
+    getStatusBadgeClass(status) {
+        const baseClass = 'artifact-status-badge';
+        switch (status) {
+            case 'In Progress':
+                return `${baseClass} in-progress`;
+            case 'Validation Passed':
+            case 'Deployed':
+                return `${baseClass} ready`;
+            case 'Pending Approval':
+                return `${baseClass} in-progress`;
+            case 'Failed':
+                return `${baseClass} failed`;
+            default:
+                return baseClass;
+        }
+    }
+
+    getColumnClass(stage) {
+        return 'kanban-column';
+    }
+
+    getHeaderClass(stage) {
+        const baseClass = 'column-header';
+        const stageLower = stage.toLowerCase().replace(' ', '-');
+        return `${baseClass} ${stageLower}`;
     }
 
     handlePromote(event) {

@@ -1,0 +1,23 @@
+<template>
+    <template if:true={showNotification}>
+        <div class={containerClass}>
+            <div class="notification-icon-wrapper">
+                <span class="notification-icon">{iconName}</span>
+            </div>
+            <div class="notification-content">
+                <template if:true={title}>
+                    <h4 class="notification-title">{title}</h4>
+                </template>
+                <p class="notification-message">{message}</p>
+            </div>
+            <template if:true={dismissible}>
+                <button class="notification-close" onclick={handleDismiss} aria-label="Close">
+                    ✕
+                </button>
+            </template>
+            <template if:true={duration}>
+                <div class={progressBarClass}></div>
+            </template>
+        </div>
+    </template>
+</template>

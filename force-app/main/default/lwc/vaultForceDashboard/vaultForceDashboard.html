@@ -1,128 +1,135 @@
 <template>
-    <div class="slds-grid slds-wrap slds-gutters">
-        <!-- Statistics Section -->
-        <div class="slds-col slds-size_1-of-1">
-            <lightning-card title="VaultForce Dashboard" icon-name="standard:dashboard">
-                <div class="slds-p-around_medium">
-                    <template if:true={isLoading}>
-                        <lightning-spinner alternative-text="Loading"></lightning-spinner>
-                    </template>
-
-                    <template if:false={isLoading}>
-                        <div class="slds-grid slds-wrap slds-gutters_small">
-                            <!-- Org Statistics -->
-                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
-                                <article class="slds-tile slds-tile_board">
-                                    <h3 class="slds-tile__title slds-truncate">
-                                        <span class="slds-text-heading_medium">{stats.totalOrgs}</span>
-                                    </h3>
-                                    <div class="slds-tile__detail">
-                                        <p class="slds-text-body_small">Connected Orgs</p>
-                                    </div>
-                                </article>
-                            </div>
-
-                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
-                                <article class="slds-tile slds-tile_board">
-                                    <h3 class="slds-tile__title slds-truncate">
-                                        <span class="slds-text-heading_medium">{stats.activeOrgs}</span>
-                                    </h3>
-                                    <div class="slds-tile__detail">
-                                        <p class="slds-text-body_small">Active Orgs</p>
-                                    </div>
-                                </article>
-                            </div>
-
-                            <!-- Deployment Statistics -->
-                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
-                                <article class="slds-tile slds-tile_board">
-                                    <h3 class="slds-tile__title slds-truncate">
-                                        <span class="slds-text-heading_medium">{stats.totalDeployments}</span>
-                                    </h3>
-                                    <div class="slds-tile__detail">
-                                        <p class="slds-text-body_small">Total Deployments</p>
-                                    </div>
-                                </article>
-                            </div>
-
-                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
-                                <article class="slds-tile slds-tile_board">
-                                    <h3 class="slds-tile__title slds-truncate">
-                                        <span class="slds-text-heading_medium">{successRate}</span>
-                                    </h3>
-                                    <div class="slds-tile__detail">
-                                        <p class="slds-text-body_small">Success Rate</p>
-                                    </div>
-                                </article>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </lightning-card>
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">🚀 VaultForce Dashboard</h1>
+            <p class="dashboard-subtitle">Manage your Salesforce deployments with ease</p>
         </div>
 
-        <!-- Recent Deployments -->
-        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
-            <lightning-card title="Recent Deployments (Last 5)" icon-name="standard:merge">
-                <div class="slds-p-around_medium">
-                    <template if:true={recentDeployments.length}>
-                        <template for:each={recentDeployments} for:item="deployment">
-                            <article key={deployment.Id} class="slds-tile slds-m-bottom_small" style="border-left: 4px solid #0070d2;">
-                                <h3 class="slds-tile__title slds-truncate slds-text-heading_small">
-                                    {deployment.Name}
-                                </h3>
-                                <div class="slds-tile__detail">
-                                    <dl class="slds-list_horizontal slds-wrap">
-                                        <dt class="slds-item_label">Org:</dt>
-                                        <dd class="slds-item_detail">{deployment.targetOrgName}</dd>
-                                        <dt class="slds-item_label slds-m-left_small">Type:</dt>
-                                        <dd class="slds-item_detail">{deployment.Deployment_Type__c}</dd>
-                                        <dt class="slds-item_label slds-m-left_small">Status:</dt>
-                                        <dd class="slds-item_detail">
-                                            <span class={deployment.statusClass}><b>{deployment.Status__c}</b></span>
-                                        </dd>
-                                    </dl>
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <div class="spinner"></div>
+                <p class="loading-text">Loading Dashboard...</p>
+            </div>
+        </template>
+
+        <!-- Dashboard Content -->
+        <template if:false={isLoading}>
+            <!-- Statistics Grid -->
+            <div class="stats-grid">
+                <!-- Total Orgs Stat -->
+                <div class="stat-card primary">
+                    <div class="stat-icon primary">🌐</div>
+                    <div class="stat-value">{stats.totalOrgs}</div>
+                    <div class="stat-label">Connected Orgs</div>
+                    <div class="stat-change positive">↑ All Time</div>
+                </div>
+
+                <!-- Active Orgs Stat -->
+                <div class="stat-card success">
+                    <div class="stat-icon success">✓</div>
+                    <div class="stat-value">{stats.activeOrgs}</div>
+                    <div class="stat-label">Active Orgs</div>
+                    <div class="stat-change positive">↑ Currently Active</div>
+                </div>
+
+                <!-- Total Deployments Stat -->
+                <div class="stat-card warning">
+                    <div class="stat-icon warning">📦</div>
+                    <div class="stat-value">{stats.totalDeployments}</div>
+                    <div class="stat-label">Total Deployments</div>
+                    <div class="stat-change positive">↑ All Time</div>
+                </div>
+
+                <!-- Success Rate Stat -->
+                <div class="stat-card info">
+                    <div class="stat-icon info">📊</div>
+                    <div class="stat-value">{successRate}</div>
+                    <div class="stat-label">Success Rate</div>
+                    <div class="stat-change positive">↑ Last 30 Days</div>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="content-grid">
+                <!-- Recent Deployments -->
+                <div class="modern-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span>🚢</span>
+                            Recent Deployments
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <template if:true={recentDeployments.length}>
+                            <template for:each={recentDeployments} for:item="deployment">
+                                <div key={deployment.Id} class={deployment.deploymentItemClass}>
+                                    <div class="deployment-header">
+                                        <div class="deployment-name">{deployment.Name}</div>
+                                        <div class={deployment.statusBadgeClass}>
+                                            {deployment.Status__c}
+                                        </div>
+                                    </div>
+                                    <div class="deployment-meta">
+                                        <div class="meta-item">
+                                            <span class="meta-label">Org</span>
+                                            <span class="meta-value">{deployment.targetOrgName}</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="meta-label">Type</span>
+                                            <span class="meta-value">{deployment.Deployment_Type__c}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </article>
+                            </template>
                         </template>
-                    </template>
-                    <template if:false={recentDeployments.length}>
-                        <p class="slds-text-body_small slds-text-color_weak">No recent deployments</p>
-                    </template>
+                        <template if:false={recentDeployments.length}>
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📭</div>
+                                <p class="empty-state-text">No recent deployments</p>
+                            </div>
+                        </template>
+                    </div>
                 </div>
-            </lightning-card>
-        </div>
 
-        <!-- Recent Activity -->
-        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
-            <lightning-card title="Recent Activity (Last 10)" icon-name="standard:event">
-                <div class="slds-p-around_medium">
-                    <template if:true={recentAuditLogs.length}>
-                        <template for:each={recentAuditLogs} for:item="log">
-                            <article key={log.Id} class="slds-tile slds-m-bottom_small" style="border-left: 4px solid #04844b;">
-                                <h3 class="slds-tile__title slds-truncate slds-text-heading_small">
-                                    <strong>{log.Action__c}</strong>
-                                </h3>
-                                <div class="slds-tile__detail">
-                                    <dl class="slds-list_horizontal slds-wrap">
-                                        <dt class="slds-item_label">User:</dt>
-                                        <dd class="slds-item_detail">{log.Username__c}</dd>
-                                        <dt class="slds-item_label slds-m-left_small">Type:</dt>
-                                        <dd class="slds-item_detail">{log.Object_Type__c}</dd>
-                                        <dt class="slds-item_label slds-m-left_small">Time:</dt>
-                                        <dd class="slds-item_detail">
+                <!-- Recent Activity -->
+                <div class="modern-card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span>📋</span>
+                            Recent Activity
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <template if:true={recentAuditLogs.length}>
+                            <template for:each={recentAuditLogs} for:item="log">
+                                <div key={log.Id} class="activity-item">
+                                    <div class="activity-header">{log.Action__c}</div>
+                                    <div class="activity-details">
+                                        <div class="activity-detail">
+                                            <strong>User:</strong> {log.Username__c}
+                                        </div>
+                                        <div class="activity-detail">
+                                            <strong>Type:</strong> {log.Object_Type__c}
+                                        </div>
+                                        <div class="activity-detail">
+                                            <strong>Time:</strong>
                                             <lightning-formatted-date-time value={log.Timestamp__c}></lightning-formatted-date-time>
-                                        </dd>
-                                    </dl>
+                                        </div>
+                                    </div>
                                 </div>
-                            </article>
+                            </template>
                         </template>
-                    </template>
-                    <template if:false={recentAuditLogs.length}>
-                        <p class="slds-text-body_small slds-text-color_weak">No recent activity</p>
-                    </template>
+                        <template if:false={recentAuditLogs.length}>
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📝</div>
+                                <p class="empty-state-text">No recent activity</p>
+                            </div>
+                        </template>
+                    </div>
                 </div>
-            </lightning-card>
-        </div>
+            </div>
+        </template>
     </div>
 </template>
