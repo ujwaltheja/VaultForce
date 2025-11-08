@@ -9,6 +9,8 @@ public with sharing class OrgService {
      * @param orgType The type of org (Production, Sandbox, Developer, Scratch)
      * @param instanceUrl The instance URL
      * @param username The username
+     * @param accessToken The OAuth access token
+     * @param refreshToken The OAuth refresh token
      * @return The created Salesforce_Org__c record
      */
     @AuraEnabled
@@ -16,7 +18,9 @@ public with sharing class OrgService {
         String orgName,
         String orgType,
         String instanceUrl,
-        String username
+        String username,
+        String accessToken,
+        String refreshToken
     ) {
         try {
             Salesforce_Org__c org = new Salesforce_Org__c(
@@ -24,8 +28,11 @@ public with sharing class OrgService {
                 Org_Type__c = orgType,
                 Instance_URL__c = instanceUrl,
                 Username__c = username,
+                Access_Token_Encrypted__c = accessToken,
+                Refresh_Token_Encrypted__c = refreshToken,
                 Status__c = 'Active',
-                API_Version__c = '60.0'
+                API_Version__c = '60.0',
+                Last_Connected__c = System.now()
             );
             insert org;
 
@@ -35,6 +42,110 @@ public with sharing class OrgService {
             return org;
         } catch (Exception e) {
             throw new AuraHandledException('Error creating org: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * @description Generates OAuth authorization URL for Salesforce org login
+     * @param callbackUrl The callback URL for OAuth redirect
+     * @return OAuth authorization URL
+     */
+    @AuraEnabled
+    public static String getOAuthAuthorizationUrl(String callbackUrl) {
+        try {
+            String clientId = getClientId();
+            String responseType = 'code';
+            String scope = 'api refresh_token';
+
+            // Build the authorization URL
+            String authUrl = '/services/oauth2/authorize?' +
+                'response_type=' + EncodingUtil.urlEncode(responseType, 'UTF-8') +
+                '&client_id=' + EncodingUtil.urlEncode(clientId, 'UTF-8') +
+                '&redirect_uri=' + EncodingUtil.urlEncode(callbackUrl, 'UTF-8') +
+                '&scope=' + EncodingUtil.urlEncode(scope, 'UTF-8') +
+                '&prompt=login';
+
+            return authUrl;
+        } catch (Exception e) {
+            throw new AuraHandledException('Error generating OAuth URL: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * @description Exchanges OAuth authorization code for access and refresh tokens
+     * @param orgName The org name
+     * @param orgType The org type
+     * @param authorizationCode The OAuth authorization code from callback
+     * @param callbackUrl The callback URL used in authorization request
+     * @param instanceUrl The instance URL of the target org
+     * @return The created Salesforce_Org__c record with tokens
+     */
+    @AuraEnabled
+    public static Salesforce_Org__c exchangeAuthorizationCode(
+        String orgName,
+        String orgType,
+        String authorizationCode,
+        String callbackUrl,
+        String instanceUrl
+    ) {
+        try {
+            if (String.isBlank(authorizationCode)) {
+                throw new AuraHandledException('Authorization code is missing. OAuth flow may have been cancelled.');
+            }
+
+            // Prepare OAuth token request
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint(instanceUrl + '/services/oauth2/token');
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+            String body = 'grant_type=authorization_code' +
+                         '&code=' + EncodingUtil.urlEncode(authorizationCode, 'UTF-8') +
+                         '&client_id=' + EncodingUtil.urlEncode(getClientId(), 'UTF-8') +
+                         '&client_secret=' + EncodingUtil.urlEncode(getClientSecret(), 'UTF-8') +
+                         '&redirect_uri=' + EncodingUtil.urlEncode(callbackUrl, 'UTF-8');
+            req.setBody(body);
+            req.setTimeout(10000);
+
+            Http http = new Http();
+            HttpResponse res = http.send(req);
+
+            if (res.getStatusCode() != 200) {
+                throw new AuraHandledException(
+                    'OAuth token exchange failed: ' + res.getStatus() + ' - ' + res.getBody()
+                );
+            }
+
+            // Parse token response
+            Map<String, Object> tokenResponse = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+            String accessToken = (String) tokenResponse.get('access_token');
+            String refreshToken = (String) tokenResponse.get('refresh_token');
+            String username = '';
+
+            // Get user info from access token
+            HttpRequest userReq = new HttpRequest();
+            userReq.setEndpoint(instanceUrl + '/services/oauth2/userinfo');
+            userReq.setMethod('GET');
+            userReq.setHeader('Authorization', 'Bearer ' + accessToken);
+            userReq.setTimeout(10000);
+
+            HttpResponse userRes = http.send(userReq);
+            if (userRes.getStatusCode() == 200) {
+                Map<String, Object> userInfo = (Map<String, Object>) JSON.deserializeUntyped(userRes.getBody());
+                username = (String) userInfo.get('preferred_username');
+            }
+
+            if (String.isBlank(username)) {
+                username = 'Unknown User';
+            }
+
+            // Create org with tokens
+            return createOrg(orgName, orgType, instanceUrl, username, accessToken, refreshToken);
+
+        } catch (AuraHandledException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AuraHandledException('Error exchanging authorization code: ' + e.getMessage());
         }
     }
 
@@ -129,11 +240,22 @@ public with sharing class OrgService {
     public static ConnectionResult testConnection(Id orgId) {
         try {
             Salesforce_Org__c org = [
-                SELECT Id, Instance_URL__c, Access_Token_Encrypted__c, API_Version__c
+                SELECT Id, Instance_URL__c, Access_Token_Encrypted__c, API_Version__c, Status__c
                 FROM Salesforce_Org__c
                 WHERE Id = :orgId
                 LIMIT 1
             ];
+
+            ConnectionResult result = new ConnectionResult();
+
+            // Check if access token is present
+            if (String.isBlank(org.Access_Token_Encrypted__c)) {
+                result.success = false;
+                result.message = 'OAuth credentials not configured. Please reconnect this org.';
+                org.Status__c = 'Not Authenticated';
+                update org;
+                return result;
+            }
 
             // Make a simple API call to test connection
             HttpRequest req = new HttpRequest();
@@ -141,8 +263,7 @@ public with sharing class OrgService {
             req.setEndpoint(endpoint);
             req.setMethod('GET');
             req.setHeader('Authorization', 'Bearer ' + org.Access_Token_Encrypted__c);
-
-            ConnectionResult result = new ConnectionResult();
+            req.setTimeout(10000);
 
             try {
                 Http http = new Http();
@@ -156,9 +277,21 @@ public with sharing class OrgService {
                     org.Last_Connected__c = System.now();
                     org.Status__c = 'Active';
                     update org;
+                } else if (res.getStatusCode() == 401) {
+                    // Token might be expired, trigger refresh
+                    try {
+                        refreshToken(orgId);
+                        result.success = true;
+                        result.message = 'Token refreshed and connection established';
+                    } catch (Exception refreshError) {
+                        result.success = false;
+                        result.message = 'Token expired and refresh failed. Please reconnect this org.';
+                        org.Status__c = 'Token Expired';
+                        update org;
+                    }
                 } else {
                     result.success = false;
-                    result.message = 'Connection failed: ' + res.getBody();
+                    result.message = 'Connection failed: ' + res.getStatus();
                     org.Status__c = 'Error';
                     update org;
                 }
@@ -183,22 +316,28 @@ public with sharing class OrgService {
     public static void refreshToken(Id orgId) {
         try {
             Salesforce_Org__c org = [
-                SELECT Id, Instance_URL__c, Refresh_Token_Encrypted__c
+                SELECT Id, Instance_URL__c, Refresh_Token_Encrypted__c, Status__c
                 FROM Salesforce_Org__c
                 WHERE Id = :orgId
                 LIMIT 1
             ];
+
+            // Validate refresh token exists
+            if (String.isBlank(org.Refresh_Token_Encrypted__c)) {
+                throw new AuraHandledException('Refresh token not available. Please reconnect this org.');
+            }
 
             // Call OAuth token refresh endpoint
             HttpRequest req = new HttpRequest();
             req.setEndpoint(org.Instance_URL__c + '/services/oauth2/token');
             req.setMethod('POST');
             req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+            req.setTimeout(10000);
 
             String body = 'grant_type=refresh_token' +
-                         '&refresh_token=' + org.Refresh_Token_Encrypted__c +
-                         '&client_id=' + getClientId() +
-                         '&client_secret=' + getClientSecret();
+                         '&refresh_token=' + EncodingUtil.urlEncode(org.Refresh_Token_Encrypted__c, 'UTF-8') +
+                         '&client_id=' + EncodingUtil.urlEncode(getClientId(), 'UTF-8') +
+                         '&client_secret=' + EncodingUtil.urlEncode(getClientSecret(), 'UTF-8');
             req.setBody(body);
 
             Http http = new Http();
@@ -208,41 +347,119 @@ public with sharing class OrgService {
                 Map<String, Object> response = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
                 String newAccessToken = (String) response.get('access_token');
 
+                if (String.isBlank(newAccessToken)) {
+                    throw new AuraHandledException('Access token not returned from OAuth endpoint');
+                }
+
                 org.Access_Token_Encrypted__c = newAccessToken;
                 org.Last_Connected__c = System.now();
                 org.Status__c = 'Active';
                 update org;
+
+                AuditService.log('Token Refreshed', 'Salesforce_Org__c', orgId);
             } else {
-                org.Status__c = 'Expired';
+                org.Status__c = 'Token Expired';
                 update org;
-                throw new AuraHandledException('Token refresh failed: ' + res.getBody());
+                throw new AuraHandledException('Token refresh failed: ' + res.getStatus() + ' - ' + res.getBody());
             }
 
+        } catch (AuraHandledException e) {
+            throw e;
         } catch (Exception e) {
             throw new AuraHandledException('Error refreshing token: ' + e.getMessage());
         }
     }
 
     /**
-     * @description Gets OAuth client ID from custom metadata
+     * @description Validates if an org has OAuth credentials configured
+     * @param orgId The org ID
+     * @return Validation result
      */
-    private static String getClientId() {
-        // In a real implementation, retrieve from Custom Metadata Type
-        return 'YOUR_CLIENT_ID';
+    @AuraEnabled
+    public static OrgValidationResult validateOrgCredentials(Id orgId) {
+        OrgValidationResult result = new OrgValidationResult();
+        try {
+            Salesforce_Org__c org = [
+                SELECT Id, Access_Token_Encrypted__c, Refresh_Token_Encrypted__c, Status__c
+                FROM Salesforce_Org__c
+                WHERE Id = :orgId
+                LIMIT 1
+            ];
+
+            result.isValid = !String.isBlank(org.Access_Token_Encrypted__c);
+            result.hasAccessToken = !String.isBlank(org.Access_Token_Encrypted__c);
+            result.hasRefreshToken = !String.isBlank(org.Refresh_Token_Encrypted__c);
+            result.status = org.Status__c;
+
+            if (!result.isValid) {
+                result.message = 'OAuth credentials not configured. Please reconnect this org.';
+            } else {
+                result.message = 'Org is properly configured.';
+            }
+
+        } catch (Exception e) {
+            result.isValid = false;
+            result.message = 'Error validating org: ' + e.getMessage();
+        }
+
+        return result;
     }
 
     /**
-     * @description Gets OAuth client secret from custom metadata
+     * @description Gets OAuth client ID from custom settings or environment
+     * Update this method with your actual OAuth credentials
+     */
+    private static String getClientId() {
+        // TODO: Replace with actual OAuth credentials from your Salesforce Connected App
+        // Option 1: Use Named Credentials (recommended for production)
+        // return [SELECT Endpoint FROM NamedCredential WHERE DeveloperName='SalesforceOAuth'].Endpoint;
+
+        // Option 2: Store in Custom Metadata Type (OAuth_Config__mdt)
+        // Option 3: Store in Custom Settings
+
+        // For development: use environment-specific values
+        String clientId = 'YOUR_OAUTH_CLIENT_ID_HERE';
+
+        if (String.isBlank(clientId) || clientId == 'YOUR_OAUTH_CLIENT_ID_HERE') {
+            throw new AuraHandledException(
+                'OAuth Client ID not configured. Please update getClientId() in OrgService.cls with your Connected App credentials.'
+            );
+        }
+
+        return clientId;
+    }
+
+    /**
+     * @description Gets OAuth client secret from custom settings or environment
+     * Update this method with your actual OAuth credentials
      */
     private static String getClientSecret() {
-        // In a real implementation, retrieve from Named Credentials or Custom Metadata
-        return 'YOUR_CLIENT_SECRET';
+        // TODO: Replace with actual OAuth credentials from your Salesforce Connected App
+        // For security, it's recommended to use Named Credentials instead of storing secrets in code
+
+        String clientSecret = 'YOUR_OAUTH_CLIENT_SECRET_HERE';
+
+        if (String.isBlank(clientSecret) || clientSecret == 'YOUR_OAUTH_CLIENT_SECRET_HERE') {
+            throw new AuraHandledException(
+                'OAuth Client Secret not configured. Please update getClientSecret() in OrgService.cls with your Connected App credentials.'
+            );
+        }
+
+        return clientSecret;
     }
 
     // Inner classes
 
     public class ConnectionResult {
         @AuraEnabled public Boolean success;
+        @AuraEnabled public String message;
+    }
+
+    public class OrgValidationResult {
+        @AuraEnabled public Boolean isValid;
+        @AuraEnabled public Boolean hasAccessToken;
+        @AuraEnabled public Boolean hasRefreshToken;
+        @AuraEnabled public String status;
         @AuraEnabled public String message;
     }
 }

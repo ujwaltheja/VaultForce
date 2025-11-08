@@ -29,6 +29,7 @@ export default class OrgList extends LightningElement {
     @track orgs = [];
     @track columns = columns;
     @track isLoading = false;
+    @track showNewOrgModal = false;
     wiredOrgsResult;
 
     @wire(getOrgs)
@@ -44,22 +45,42 @@ export default class OrgList extends LightningElement {
     }
 
     handleRowAction(event) {
-        const actionName = event.detail.action.name;
-        const row = event.detail.row;
+        try {
+            const actionName = event.detail?.action?.name;
+            const row = event.detail?.row;
 
-        switch (actionName) {
-            case 'view':
-                this.viewOrg(row.Id);
-                break;
-            case 'test_connection':
-                this.testOrgConnection(row.Id);
-                break;
-            case 'create_snapshot':
-                this.createSnapshot(row.Id);
-                break;
-            case 'delete':
-                this.deleteOrg(row.Id);
-                break;
+            if (!actionName) {
+                console.error('Row action: Action name is undefined', event.detail);
+                this.showToast('Error', 'Invalid action configuration', 'error');
+                return;
+            }
+
+            if (!row || !row.Id) {
+                console.error('Row action: Row data is missing', row);
+                this.showToast('Error', 'Invalid row selection', 'error');
+                return;
+            }
+
+            switch (actionName) {
+                case 'view':
+                    this.viewOrg(row.Id);
+                    break;
+                case 'test_connection':
+                    this.testOrgConnection(row.Id);
+                    break;
+                case 'create_snapshot':
+                    this.createSnapshot(row.Id);
+                    break;
+                case 'delete':
+                    this.deleteOrg(row.Id);
+                    break;
+                default:
+                    console.warn(`Row action: Unknown action name "${actionName}"`, event.detail);
+                    this.showToast('Warning', `Action "${actionName}" is not recognized`, 'warning');
+            }
+        } catch (error) {
+            console.error('Row action handler error:', error);
+            this.showToast('Error', 'An unexpected error occurred while processing the action', 'error');
         }
     }
 
@@ -115,8 +136,18 @@ export default class OrgList extends LightningElement {
     }
 
     handleNewOrg() {
-        const newOrgEvent = new CustomEvent('neworg');
-        this.dispatchEvent(newOrgEvent);
+        this.showNewOrgModal = true;
+    }
+
+    handleCloseNewOrgModal() {
+        this.showNewOrgModal = false;
+    }
+
+    handleOrgCreated(event) {
+        this.showNewOrgModal = false;
+        this.showToast('Success', 'Org created successfully', 'success');
+        // Refresh the org list
+        return refreshApex(this.wiredOrgsResult);
     }
 
     handleRefresh() {

@@ -1,0 +1,115 @@
+<template>
+    <div class="slds-box slds-p-around_medium">
+        <h2 class="slds-text-heading_large slds-m-bottom_medium">Connect Salesforce Org</h2>
+
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading"></lightning-spinner>
+        </template>
+
+        <template if:false={isLoading}>
+            <template if:false={showOAuthFlow}>
+                <!-- Form to enter org details -->
+                <div class="slds-form slds-form_compound">
+                    <div class="slds-form-element slds-m-bottom_medium">
+                        <label class="slds-form-element__label" for="orgName">
+                            <abbr class="slds-required" title="required">*</abbr> Org Name
+                        </label>
+                        <div class="slds-form-element__control">
+                            <input
+                                class="slds-input"
+                                type="text"
+                                id="orgName"
+                                placeholder="e.g., Production Org"
+                                value={orgName}
+                                onchange={handleOrgNameChange}
+                            />
+                        </div>
+                    </div>
+
+                    <div class="slds-form-element slds-m-bottom_medium">
+                        <label class="slds-form-element__label" for="orgType">
+                            <abbr class="slds-required" title="required">*</abbr> Org Type
+                        </label>
+                        <div class="slds-form-element__control">
+                            <div class="slds-select_container">
+                                <select
+                                    class="slds-select"
+                                    id="orgType"
+                                    value={orgType}
+                                    onchange={handleOrgTypeChange}
+                                >
+                                    <option value="">-- Select --</option>
+                                    <option value="Production">Production</option>
+                                    <option value="Sandbox">Sandbox</option>
+                                    <option value="Developer">Developer</option>
+                                    <option value="Scratch">Scratch</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slds-form-element slds-m-bottom_medium">
+                        <label class="slds-form-element__label" for="instanceUrl">
+                            <abbr class="slds-required" title="required">*</abbr> Instance URL
+                        </label>
+                        <div class="slds-form-element__control">
+                            <input
+                                class="slds-input"
+                                type="url"
+                                id="instanceUrl"
+                                placeholder="e.g., https://login.salesforce.com"
+                                value={instanceUrl}
+                                onchange={handleInstanceUrlChange}
+                            />
+                        </div>
+                    </div>
+
+                    <div class="slds-form-element slds-m-bottom_medium">
+                        <label class="slds-form-element__label">
+                            <abbr class="slds-required" title="required">*</abbr> Authorization Method
+                        </label>
+                        <div class="slds-form-element__control">
+                            <p class="slds-text-body_small slds-text-color_weak">
+                                You will be redirected to authorize VaultForce to access your Salesforce org.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="slds-form-element slds-m-top_large">
+                        <lightning-button
+                            label="Cancel"
+                            onclick={handleCancel}
+                            class="slds-m-right_small"
+                        ></lightning-button>
+                        <lightning-button
+                            label="Authorize with OAuth"
+                            variant="brand"
+                            onclick={handleOAuthClick}
+                            disabled={!isFormValid}
+                        ></lightning-button>
+                    </div>
+
+                    <template if:true={errorMessage}>
+                        <div class="slds-m-top_medium slds-notify slds-notify_alert slds-alert_error" role="alert">
+                            <span class="slds-assistive-text">error</span>
+                            <svg class="slds-icon slds-icon_small slds-m-right_small" aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                            </svg>
+                            <span class="slds-truncate">{errorMessage}</span>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template if:true={showOAuthFlow}>
+                <!-- OAuth Flow in Progress -->
+                <div class="slds-text-align_center slds-m-top_large">
+                    <lightning-spinner alternative-text="Authorizing"></lightning-spinner>
+                    <p class="slds-m-top_medium slds-text-body_small">
+                        You will be redirected to Salesforce to authorize VaultForce...
+                    </p>
+                </div>
+            </template>
+        </template>
+    </div>
+</template>

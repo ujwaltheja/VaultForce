@@ -21,15 +21,46 @@
             </template>
 
             <template if:false={isLoading}>
-                <lightning-datatable
-                    key-field="Id"
-                    data={orgs}
-                    columns={columns}
-                    onrowaction={handleRowAction}
-                    hide-checkbox-column
-                >
-                </lightning-datatable>
+                <template if:true={orgs.length}>
+                    <lightning-datatable
+                        key-field="Id"
+                        data={orgs}
+                        columns={columns}
+                        onrowaction={handleRowAction}
+                        hide-checkbox-column
+                    >
+                    </lightning-datatable>
+                </template>
+
+                <template if:false={orgs.length}>
+                    <div class="slds-box slds-text-align_center">
+                        <p class="slds-text-body_small slds-text-color_weak">No connected orgs yet. Click "New Org" to add one.</p>
+                    </div>
+                </template>
             </template>
         </div>
     </lightning-card>
+
+    <!-- New Org Modal -->
+    <template if:true={showNewOrgModal}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-new-org" aria-modal="true" aria-hidden="false" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container slds-modal__container_large">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close dialog" onclick={handleCloseNewOrgModal}>
+                        <lightning-icon icon-name="utility:close" alternative-text="Close" size="small"></lightning-icon>
+                    </button>
+                    <h2 id="modal-heading-new-org" class="slds-text-heading_medium slds-hyphenate">
+                        Connect New Salesforce Org
+                    </h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <c-new-org-form
+                        onorgcreated={handleOrgCreated}
+                        oncancel={handleCloseNewOrgModal}
+                    ></c-new-org-form>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
 </template>
