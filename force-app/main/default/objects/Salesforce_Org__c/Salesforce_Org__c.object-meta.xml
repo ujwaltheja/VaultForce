@@ -70,14 +70,18 @@
         <fullName>Access_Token_Encrypted__c</fullName>
         <label>Access Token (Encrypted)</label>
         <type>EncryptedText</type>
-        <length>255</length>
+        <length>175</length>
+        <maskChar>asterisk</maskChar>
+        <maskType>all</maskType>
         <required>false</required>
     </fields>
     <fields>
         <fullName>Refresh_Token_Encrypted__c</fullName>
         <label>Refresh Token (Encrypted)</label>
         <type>EncryptedText</type>
-        <length>255</length>
+        <length>175</length>
+        <maskChar>asterisk</maskChar>
+        <maskType>all</maskType>
         <required>false</required>
     </fields>
     <fields>
@@ -130,6 +134,7 @@
         <label>Description</label>
         <type>LongTextArea</type>
         <length>32000</length>
+        <visibleLines>5</visibleLines>
         <required>false</required>
     </fields>
 </CustomObject>

@@ -1,0 +1,124 @@
+<template>
+    <lightning-card title="Deployment Pipeline" icon-name="standard:kanban">
+        <div slot="actions">
+            <lightning-button
+                label="Refresh"
+                variant="border-filled"
+                onclick={handleRefresh}
+                disabled={isLoading}
+            ></lightning-button>
+        </div>
+
+        <div class="slds-p-around_medium">
+            <template if:true={isLoading}>
+                <div class="slds-text-align_center">
+                    <lightning-spinner alternative-text="Loading"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoading}>
+                <!-- Pipeline overview -->
+                <div class="slds-grid slds-wrap slds-gutters_small slds-m-bottom_large">
+                    <template for:each={stageStats} for:item="stat">
+                        <div key={stat.stage} class="slds-col slds-size_1-of-4">
+                            <div class="slds-box slds-box_x-small slds-text-align_center">
+                                <p class="slds-text-heading_small slds-text-color_default">
+                                    {stat.stage}
+                                </p>
+                                <p class="slds-text-heading_large slds-m-top_x-small">
+                                    {stat.count}
+                                </p>
+                                <p class="slds-text-body_x-small slds-text-color_weak">
+                                    artifacts
+                                </p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Kanban board -->
+                <div class="pipeline-board slds-grid slds-wrap slds-gutters_small">
+                    <template for:each={stageData} for:item="stageInfo">
+                        <div key={stageInfo.name} class="slds-col slds-size_1-of-4 stage-column">
+                            <div class="slds-box slds-box_border" style="background-color: #f3f3f3; min-height: 600px;">
+                                <!-- Stage header -->
+                                <div class="slds-p-around_small slds-border_bottom" style="background-color: #e3e3e3;">
+                                    <h3 class="slds-text-heading_small slds-m-bottom_none">
+                                        {stageInfo.name}
+                                    </h3>
+                                    <span class="slds-badge slds-badge_lightest slds-m-top_x-small">
+                                        {stageInfo.count}
+                                    </span>
+                                </div>
+
+                                <!-- Artifacts in this stage -->
+                                <div class="slds-p-around_small" style="max-height: 550px; overflow-y: auto;">
+                                    <template for:each={stageInfo.artifacts} for:item="artifact">
+                                        <div key={artifact.Id} class="slds-box slds-box_x-small slds-m-bottom_small" style="background-color: white;">
+                                            <div class="slds-grid slds-grid_vertical">
+                                                <h4 class="slds-text-heading_x-small slds-m-bottom_x-small">
+                                                    {artifact.Name}
+                                                </h4>
+
+                                                <!-- Artifact status -->
+                                                <div class="slds-m-bottom_x-small">
+                                                    <span class={artifact.statusClass}>
+                                                        {artifact.Status__c}
+                                                    </span>
+                                                </div>
+
+                                                <!-- Artifact details -->
+                                                <p class="slds-text-body_x-small slds-m-bottom_x-small">
+                                                    <strong>Components:</strong> {artifact.componentCount}
+                                                </p>
+                                                <p class="slds-text-body_x-small slds-m-bottom_small">
+                                                    <strong>Created:</strong> {artifact.formattedCreatedDate}
+                                                </p>
+
+                                                <!-- Action buttons -->
+                                                <template if:true={artifact.canPromote}>
+                                                    <lightning-button
+                                                        label="Promote"
+                                                        size="x-small"
+                                                        variant="brand"
+                                                        onclick={handlePromote}
+                                                        data-artifact-id={artifact.Id}
+                                                        data-stage={stageInfo.name}
+                                                        class="slds-m-right_x-small"
+                                                    ></lightning-button>
+                                                </template>
+
+                                                <lightning-button
+                                                    label="View"
+                                                    size="x-small"
+                                                    variant="neutral"
+                                                    onclick={handleViewArtifact}
+                                                    data-artifact-id={artifact.Id}
+                                                ></lightning-button>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <!-- Empty state -->
+                                    <template if:false={stageInfo.count}>
+                                        <div class="slds-text-align_center slds-text-color_weak slds-p-around_medium">
+                                            <p class="slds-text-body_small">No artifacts in {stageInfo.name}</p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Error message -->
+            <template if:true={errorMessage}>
+                <div class="slds-notify slds-notify_alert slds-alert_error slds-m-top_medium" role="alert">
+                    <h2 class="slds-text-heading_small">Error</h2>
+                    <p class="slds-text-body_small slds-m-top_small">{errorMessage}</p>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

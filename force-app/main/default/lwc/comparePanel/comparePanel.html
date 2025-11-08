@@ -1,0 +1,173 @@
+<template>
+    <lightning-card title="Metadata Comparison" icon-name="standard:compare">
+        <div slot="actions">
+            <lightning-button
+                label="Compare"
+                variant="brand"
+                onclick={handleCompare}
+                disabled={isCompareDisabled}
+            ></lightning-button>
+        </div>
+
+        <div class="slds-p-around_medium">
+            <!-- Org and filter selection -->
+            <div class="slds-grid slds-wrap slds-gutters_small slds-m-bottom_medium">
+                <div class="slds-col slds-size_1-of-2">
+                    <label class="slds-form-element__label">Source Org</label>
+                    <lightning-combobox
+                        name="sourceOrg"
+                        label=""
+                        value={selectedSourceOrgId}
+                        options={orgOptions}
+                        onchange={handleSourceOrgChange}
+                    ></lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <label class="slds-form-element__label">Target Org</label>
+                    <lightning-combobox
+                        name="targetOrg"
+                        label=""
+                        value={selectedTargetOrgId}
+                        options={orgOptions}
+                        onchange={handleTargetOrgChange}
+                    ></lightning-combobox>
+                </div>
+            </div>
+
+            <!-- Metadata type filter -->
+            <div class="slds-m-bottom_medium">
+                <label class="slds-form-element__label">Metadata Types to Compare</label>
+                <lightning-input
+                    type="search"
+                    placeholder="Filter types..."
+                    value={typeFilter}
+                    onchange={handleTypeFilterChange}
+                    class="slds-m-bottom_small"
+                ></lightning-input>
+                <div class="slds-box slds-box_small" style="max-height: 200px; overflow-y: auto;">
+                    <template for:each={typeCheckboxes} for:item="typeItem">
+                        <div key={typeItem.type} class="slds-m-bottom_x-small">
+                            <lightning-input
+                                type="checkbox"
+                                label={typeItem.label}
+                                checked={typeItem.checked}
+                                data-type={typeItem.type}
+                                onchange={handleTypeToggle}
+                            ></lightning-input>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Comparison loading state -->
+            <template if:true={isComparing}>
+                <div class="slds-text-align_center slds-m-top_medium">
+                    <lightning-spinner alternative-text="Comparing orgs"></lightning-spinner>
+                    <p class="slds-m-top_small slds-text-body_small">Comparing metadata...</p>
+                </div>
+            </template>
+
+            <!-- Comparison results -->
+            <template if:true={comparisonResults}>
+                <template if:true={comparisonResults.success}>
+                    <div class="slds-m-top_large">
+                        <div class="slds-grid slds-wrap slds-gutters_small slds-m-bottom_medium">
+                            <div class="slds-col slds-size_1-of-3">
+                                <div class="slds-box slds-box_x-small slds-text-align_center">
+                                    <p class="slds-text-heading_medium slds-text-color_success">
+                                        {totalAddedCount}
+                                    </p>
+                                    <p class="slds-text-body_small">Added</p>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <div class="slds-box slds-box_x-small slds-text-align_center">
+                                    <p class="slds-text-heading_medium slds-text-color_warning">
+                                        {totalModifiedCount}
+                                    </p>
+                                    <p class="slds-text-body_small">Modified</p>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <div class="slds-box slds-box_x-small slds-text-align_center">
+                                    <p class="slds-text-heading_medium slds-text-color_error">
+                                        {totalDeletedCount}
+                                    </p>
+                                    <p class="slds-text-body_small">Deleted</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Diff table -->
+                        <div class="slds-m-top_medium">
+                            <h3 class="slds-text-heading_small slds-m-bottom_small">
+                                Differences ({comparisonResults.totalDiffs})
+                            </h3>
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th class="slds-cell-wrap">
+                                            <lightning-input
+                                                type="checkbox"
+                                                checked={allSelectedInTable}
+                                                onchange={handleSelectAllDiffs}
+                                            ></lightning-input>
+                                        </th>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={comparisonResults.diffs} for:item="diff">
+                                        <tr key={diff.fullName} class="slds-hint-parent">
+                                            <td>
+                                                <lightning-input
+                                                    type="checkbox"
+                                                    checked={diff.selected}
+                                                    data-id={diff.fullName}
+                                                    onchange={handleDiffSelection}
+                                                ></lightning-input>
+                                            </td>
+                                            <td>
+                                                <span class="slds-badge slds-badge_lightest">
+                                                    {diff.type}
+                                                </span>
+                                            </td>
+                                            <td>{diff.fullName}</td>
+                                            <td>
+                                                <span class={diff.actionClass}>
+                                                    {diff.action}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Deploy button -->
+                        <div class="slds-m-top_large">
+                            <lightning-button
+                                label="Deploy Selected"
+                                variant="brand"
+                                onclick={handleDeploySelected}
+                                disabled={isDeployButtonDisabled}
+                            ></lightning-button>
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-top_small">
+                                {selectedDiffsCount} items selected for deployment
+                            </p>
+                        </div>
+                    </div>
+                </template>
+
+                <template if:false={comparisonResults.success}>
+                    <div class="slds-notify slds-notify_alert slds-alert_error slds-m-top_medium" role="alert">
+                        <h2 class="slds-text-heading_small">Comparison Error</h2>
+                        <p class="slds-text-body_small slds-m-top_small">{comparisonResults.errorMessage}</p>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

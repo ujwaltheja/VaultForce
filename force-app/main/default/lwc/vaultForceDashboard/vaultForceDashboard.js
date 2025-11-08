@@ -18,10 +18,6 @@ export default class VaultForceDashboard extends LightningElement {
     @track recentAuditLogs = [];
     @track isLoading = true;
 
-    connectedCallback() {
-        this.loadDashboardData();
-    }
-
     @wire(getOrgs)
     wiredOrgs({ data, error }) {
         if (data) {
@@ -73,11 +69,6 @@ export default class VaultForceDashboard extends LightningElement {
             default:
                 return '';
         }
-    }
-
-    loadDashboardData() {
-        // Trigger wire service refresh
-        this.isLoading = true;
     }
 
     get successRate() {

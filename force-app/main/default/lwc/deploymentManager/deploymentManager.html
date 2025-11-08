@@ -32,4 +32,114 @@
             </template>
         </div>
     </lightning-card>
+
+    <!-- Deployment Composer Modal -->
+    <template if:true={showNewDeploymentModal}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-deploy" aria-modal="true" aria-hidden="false" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container slds-modal__container_large">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close dialog" onclick={handleCloseModal}>
+                        <lightning-icon icon-name="utility:close" alternative-text="Close" size="small"></lightning-icon>
+                    </button>
+                    <h2 id="modal-heading-deploy" class="slds-text-heading_medium slds-hyphenate">
+                        Deploy Metadata
+                    </h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <template if:true={deploymentComposerData}>
+                        <!-- Target Org Selection -->
+                        <div class="slds-form-element slds-m-bottom_medium">
+                            <label class="slds-form-element__label">
+                                <abbr class="slds-required" title="required">*</abbr> Target Org
+                            </label>
+                            <lightning-combobox
+                                name="targetOrg"
+                                value={deploymentComposerData.targetOrgId}
+                                options={orgOptions}
+                                onchange={handleDeployTargetOrgChange}
+                            ></lightning-combobox>
+                        </div>
+
+                        <!-- Test Level Selection -->
+                        <div class="slds-form-element slds-m-bottom_medium">
+                            <label class="slds-form-element__label">
+                                <abbr class="slds-required" title="required">*</abbr> Test Level
+                            </label>
+                            <lightning-combobox
+                                name="testLevel"
+                                value={deploymentComposerData.testLevel}
+                                options={testLevelOptions}
+                                onchange={handleTestLevelChange}
+                            ></lightning-combobox>
+                            <p class="slds-text-body_x-small slds-text-color_weak slds-m-top_x-small">
+                                {testLevelDescription}
+                            </p>
+                        </div>
+
+                        <!-- Validation Only Toggle -->
+                        <div class="slds-form-element slds-m-bottom_medium">
+                            <lightning-input
+                                type="toggle"
+                                label="Validation Only (Check Deploy)"
+                                checked={deploymentComposerData.validationOnly}
+                                onchange={handleValidationOnlyChange}
+                            ></lightning-input>
+                            <p class="slds-text-body_x-small slds-text-color_weak slds-m-top_x-small">
+                                Validates the deployment without actually deploying to the org
+                            </p>
+                        </div>
+
+                        <!-- Deployment Summary -->
+                        <template if:true={deploymentComposerData.items}>
+                            <div class="slds-box slds-box_small slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_small">Deployment Summary</h3>
+                                <p class="slds-text-body_small">
+                                    <strong>{deploymentComposerData.items.length}</strong> components will be deployed
+                                </p>
+                                <template for:each={componentTypeGroups} for:item="group">
+                                    <p key={group.type} class="slds-text-body_x-small slds-m-top_x-small">
+                                        {group.count} {group.type}
+                                    </p>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Error messages -->
+                        <template if:true={deploymentError}>
+                            <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_medium" role="alert">
+                                <h2 class="slds-text-heading_small">Error</h2>
+                                <p class="slds-text-body_small slds-m-top_small">{deploymentError}</p>
+                            </div>
+                        </template>
+                    </template>
+
+                    <template if:false={deploymentComposerData}>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                            No deployment data available. Please select items from the comparison panel.
+                        </p>
+                    </template>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={handleCloseModal}
+                    ></lightning-button>
+                    <lightning-button
+                        label="Validate"
+                        variant="neutral"
+                        onclick={handleValidateDeployment}
+                        disabled={isDeploying}
+                    ></lightning-button>
+                    <lightning-button
+                        label="Deploy"
+                        variant="brand"
+                        onclick={handleDeploy}
+                        disabled={isDeployButtonDisabled}
+                    ></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
 </template>

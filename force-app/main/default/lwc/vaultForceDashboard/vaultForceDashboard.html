@@ -63,28 +63,30 @@
 
         <!-- Recent Deployments -->
         <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
-            <lightning-card title="Recent Deployments" icon-name="standard:merge">
+            <lightning-card title="Recent Deployments (Last 5)" icon-name="standard:merge">
                 <div class="slds-p-around_medium">
-                    <template if:true={recentDeployments}>
+                    <template if:true={recentDeployments.length}>
                         <template for:each={recentDeployments} for:item="deployment">
-                            <article key={deployment.Id} class="slds-tile slds-m-bottom_small">
-                                <h3 class="slds-tile__title slds-truncate">
-                                    <a href="#">{deployment.Name}</a>
+                            <article key={deployment.Id} class="slds-tile slds-m-bottom_small" style="border-left: 4px solid #0070d2;">
+                                <h3 class="slds-tile__title slds-truncate slds-text-heading_small">
+                                    {deployment.Name}
                                 </h3>
                                 <div class="slds-tile__detail">
                                     <dl class="slds-list_horizontal slds-wrap">
-                                        <dt class="slds-item_label">Target:</dt>
+                                        <dt class="slds-item_label">Org:</dt>
                                         <dd class="slds-item_detail">{deployment.targetOrgName}</dd>
+                                        <dt class="slds-item_label slds-m-left_small">Type:</dt>
+                                        <dd class="slds-item_detail">{deployment.Deployment_Type__c}</dd>
                                         <dt class="slds-item_label slds-m-left_small">Status:</dt>
                                         <dd class="slds-item_detail">
-                                            <span class={deployment.statusClass}>{deployment.Status__c}</span>
+                                            <span class={deployment.statusClass}><b>{deployment.Status__c}</b></span>
                                         </dd>
                                     </dl>
                                 </div>
                             </article>
                         </template>
                     </template>
-                    <template if:false={recentDeployments}>
+                    <template if:false={recentDeployments.length}>
                         <p class="slds-text-body_small slds-text-color_weak">No recent deployments</p>
                     </template>
                 </div>
@@ -93,18 +95,20 @@
 
         <!-- Recent Activity -->
         <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
-            <lightning-card title="Recent Activity" icon-name="standard:event">
+            <lightning-card title="Recent Activity (Last 10)" icon-name="standard:event">
                 <div class="slds-p-around_medium">
-                    <template if:true={recentAuditLogs}>
+                    <template if:true={recentAuditLogs.length}>
                         <template for:each={recentAuditLogs} for:item="log">
-                            <article key={log.Id} class="slds-tile slds-m-bottom_small">
-                                <h3 class="slds-tile__title slds-truncate">
-                                    {log.Action__c}
+                            <article key={log.Id} class="slds-tile slds-m-bottom_small" style="border-left: 4px solid #04844b;">
+                                <h3 class="slds-tile__title slds-truncate slds-text-heading_small">
+                                    <strong>{log.Action__c}</strong>
                                 </h3>
                                 <div class="slds-tile__detail">
                                     <dl class="slds-list_horizontal slds-wrap">
                                         <dt class="slds-item_label">User:</dt>
                                         <dd class="slds-item_detail">{log.Username__c}</dd>
+                                        <dt class="slds-item_label slds-m-left_small">Type:</dt>
+                                        <dd class="slds-item_detail">{log.Object_Type__c}</dd>
                                         <dt class="slds-item_label slds-m-left_small">Time:</dt>
                                         <dd class="slds-item_detail">
                                             <lightning-formatted-date-time value={log.Timestamp__c}></lightning-formatted-date-time>
@@ -114,7 +118,7 @@
                             </article>
                         </template>
                     </template>
-                    <template if:false={recentAuditLogs}>
+                    <template if:false={recentAuditLogs.length}>
                         <p class="slds-text-body_small slds-text-color_weak">No recent activity</p>
                     </template>
                 </div>

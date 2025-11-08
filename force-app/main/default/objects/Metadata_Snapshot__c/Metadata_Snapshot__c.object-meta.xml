@@ -8,7 +8,7 @@
         <type>AutoNumber</type>
     </nameField>
     <deploymentStatus>Deployed</deploymentStatus>
-    <sharingModel>Private</sharingModel>
+    <sharingModel>ControlledByParent</sharingModel>
     <enableActivities>true</enableActivities>
     <enableReports>true</enableReports>
     <enableHistory>true</enableHistory>
@@ -19,7 +19,6 @@
         <referenceTo>Salesforce_Org__c</referenceTo>
         <relationshipLabel>Metadata Snapshots</relationshipLabel>
         <relationshipName>Metadata_Snapshots</relationshipName>
-        <required>true</required>
         <reparentableMasterDetail>false</reparentableMasterDetail>
     </fields>
     <fields>
@@ -102,6 +101,7 @@
         <label>Snapshot Data (JSON)</label>
         <type>LongTextArea</type>
         <length>131072</length>
+        <visibleLines>5</visibleLines>
         <required>false</required>
     </fields>
     <fields>
@@ -109,6 +109,7 @@
         <label>Error Message</label>
         <type>LongTextArea</type>
         <length>32000</length>
+        <visibleLines>5</visibleLines>
         <required>false</required>
     </fields>
     <fields>

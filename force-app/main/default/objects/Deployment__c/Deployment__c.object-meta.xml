@@ -29,6 +29,7 @@
         <relationshipLabel>Target Deployments</relationshipLabel>
         <relationshipName>Target_Deployments</relationshipName>
         <required>true</required>
+        <deleteConstraint>Restrict</deleteConstraint>
     </fields>
     <fields>
         <fullName>Status__c</fullName>
@@ -190,6 +191,7 @@
         <label>Error Message</label>
         <type>LongTextArea</type>
         <length>32000</length>
+        <visibleLines>5</visibleLines>
         <required>false</required>
     </fields>
     <fields>

@@ -16,7 +16,6 @@
         <referenceTo>Deployment__c</referenceTo>
         <relationshipLabel>Deployment Components</relationshipLabel>
         <relationshipName>Deployment_Components</relationshipName>
-        <required>true</required>
         <reparentableMasterDetail>false</reparentableMasterDetail>
     </fields>
     <fields>
@@ -70,6 +69,7 @@
         <label>Error Message</label>
         <type>LongTextArea</type>
         <length>32000</length>
+        <visibleLines>5</visibleLines>
         <required>false</required>
     </fields>
     <fields>

@@ -106,6 +106,7 @@
         <label>Details (JSON)</label>
         <type>LongTextArea</type>
         <length>131072</length>
+        <visibleLines>5</visibleLines>
         <required>false</required>
     </fields>
     <fields>

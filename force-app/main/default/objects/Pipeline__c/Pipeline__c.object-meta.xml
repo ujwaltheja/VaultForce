@@ -18,6 +18,7 @@
         <relationshipLabel>Source Pipelines</relationshipLabel>
         <relationshipName>Source_Pipelines</relationshipName>
         <required>true</required>
+        <deleteConstraint>Restrict</deleteConstraint>
     </fields>
     <fields>
         <fullName>Target_Org__c</fullName>
@@ -27,6 +28,7 @@
         <relationshipLabel>Target Pipelines</relationshipLabel>
         <relationshipName>Target_Pipelines</relationshipName>
         <required>true</required>
+        <deleteConstraint>Restrict</deleteConstraint>
     </fields>
     <fields>
         <fullName>Active__c</fullName>
@@ -95,6 +97,7 @@
         <label>Description</label>
         <type>LongTextArea</type>
         <length>32000</length>
+        <visibleLines>5</visibleLines>
         <required>false</required>
     </fields>
 </CustomObject>
