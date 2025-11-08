@@ -1,0 +1,35 @@
+<template>
+    <lightning-card title="Deployments" icon-name="standard:merge">
+        <div slot="actions">
+            <lightning-button
+                label="New Deployment"
+                onclick={handleNewDeployment}
+                variant="brand"
+            ></lightning-button>
+            <lightning-button-icon
+                icon-name="utility:refresh"
+                variant="border-filled"
+                alternative-text="Refresh"
+                title="Refresh"
+                onclick={handleRefresh}
+            ></lightning-button-icon>
+        </div>
+
+        <div class="slds-p-around_medium">
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading"></lightning-spinner>
+            </template>
+
+            <template if:false={isLoading}>
+                <lightning-datatable
+                    key-field="Id"
+                    data={deployments}
+                    columns={columns}
+                    onrowaction={handleRowAction}
+                    hide-checkbox-column
+                >
+                </lightning-datatable>
+            </template>
+        </div>
+    </lightning-card>
+</template>

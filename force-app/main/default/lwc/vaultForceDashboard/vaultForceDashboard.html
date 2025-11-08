@@ -1,0 +1,124 @@
+<template>
+    <div class="slds-grid slds-wrap slds-gutters">
+        <!-- Statistics Section -->
+        <div class="slds-col slds-size_1-of-1">
+            <lightning-card title="VaultForce Dashboard" icon-name="standard:dashboard">
+                <div class="slds-p-around_medium">
+                    <template if:true={isLoading}>
+                        <lightning-spinner alternative-text="Loading"></lightning-spinner>
+                    </template>
+
+                    <template if:false={isLoading}>
+                        <div class="slds-grid slds-wrap slds-gutters_small">
+                            <!-- Org Statistics -->
+                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                <article class="slds-tile slds-tile_board">
+                                    <h3 class="slds-tile__title slds-truncate">
+                                        <span class="slds-text-heading_medium">{stats.totalOrgs}</span>
+                                    </h3>
+                                    <div class="slds-tile__detail">
+                                        <p class="slds-text-body_small">Connected Orgs</p>
+                                    </div>
+                                </article>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                <article class="slds-tile slds-tile_board">
+                                    <h3 class="slds-tile__title slds-truncate">
+                                        <span class="slds-text-heading_medium">{stats.activeOrgs}</span>
+                                    </h3>
+                                    <div class="slds-tile__detail">
+                                        <p class="slds-text-body_small">Active Orgs</p>
+                                    </div>
+                                </article>
+                            </div>
+
+                            <!-- Deployment Statistics -->
+                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                <article class="slds-tile slds-tile_board">
+                                    <h3 class="slds-tile__title slds-truncate">
+                                        <span class="slds-text-heading_medium">{stats.totalDeployments}</span>
+                                    </h3>
+                                    <div class="slds-tile__detail">
+                                        <p class="slds-text-body_small">Total Deployments</p>
+                                    </div>
+                                </article>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                                <article class="slds-tile slds-tile_board">
+                                    <h3 class="slds-tile__title slds-truncate">
+                                        <span class="slds-text-heading_medium">{successRate}</span>
+                                    </h3>
+                                    <div class="slds-tile__detail">
+                                        <p class="slds-text-body_small">Success Rate</p>
+                                    </div>
+                                </article>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </lightning-card>
+        </div>
+
+        <!-- Recent Deployments -->
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+            <lightning-card title="Recent Deployments" icon-name="standard:merge">
+                <div class="slds-p-around_medium">
+                    <template if:true={recentDeployments}>
+                        <template for:each={recentDeployments} for:item="deployment">
+                            <article key={deployment.Id} class="slds-tile slds-m-bottom_small">
+                                <h3 class="slds-tile__title slds-truncate">
+                                    <a href="#">{deployment.Name}</a>
+                                </h3>
+                                <div class="slds-tile__detail">
+                                    <dl class="slds-list_horizontal slds-wrap">
+                                        <dt class="slds-item_label">Target:</dt>
+                                        <dd class="slds-item_detail">{deployment.targetOrgName}</dd>
+                                        <dt class="slds-item_label slds-m-left_small">Status:</dt>
+                                        <dd class="slds-item_detail">
+                                            <span class={deployment.statusClass}>{deployment.Status__c}</span>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </article>
+                        </template>
+                    </template>
+                    <template if:false={recentDeployments}>
+                        <p class="slds-text-body_small slds-text-color_weak">No recent deployments</p>
+                    </template>
+                </div>
+            </lightning-card>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+            <lightning-card title="Recent Activity" icon-name="standard:event">
+                <div class="slds-p-around_medium">
+                    <template if:true={recentAuditLogs}>
+                        <template for:each={recentAuditLogs} for:item="log">
+                            <article key={log.Id} class="slds-tile slds-m-bottom_small">
+                                <h3 class="slds-tile__title slds-truncate">
+                                    {log.Action__c}
+                                </h3>
+                                <div class="slds-tile__detail">
+                                    <dl class="slds-list_horizontal slds-wrap">
+                                        <dt class="slds-item_label">User:</dt>
+                                        <dd class="slds-item_detail">{log.Username__c}</dd>
+                                        <dt class="slds-item_label slds-m-left_small">Time:</dt>
+                                        <dd class="slds-item_detail">
+                                            <lightning-formatted-date-time value={log.Timestamp__c}></lightning-formatted-date-time>
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </article>
+                        </template>
+                    </template>
+                    <template if:false={recentAuditLogs}>
+                        <p class="slds-text-body_small slds-text-color_weak">No recent activity</p>
+                    </template>
+                </div>
+            </lightning-card>
+        </div>
+    </div>
+</template>

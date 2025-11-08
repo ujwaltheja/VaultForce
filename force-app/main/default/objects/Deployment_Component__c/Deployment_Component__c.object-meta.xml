@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Deployment Component</label>
+    <pluralLabel>Deployment Components</pluralLabel>
+    <nameField>
+        <label>Component Name</label>
+        <type>Text</type>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ControlledByParent</sharingModel>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Deployment__c</fullName>
+        <label>Deployment</label>
+        <type>MasterDetail</type>
+        <referenceTo>Deployment__c</referenceTo>
+        <relationshipLabel>Deployment Components</relationshipLabel>
+        <relationshipName>Deployment_Components</relationshipName>
+        <required>true</required>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+    </fields>
+    <fields>
+        <fullName>Component_Type__c</fullName>
+        <label>Component Type</label>
+        <type>Text</type>
+        <length>255</length>
+        <required>true</required>
+    </fields>
+    <fields>
+        <fullName>Component_Name__c</fullName>
+        <label>Component Name</label>
+        <type>Text</type>
+        <length>255</length>
+        <required>true</required>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <label>Status</label>
+        <type>Picklist</type>
+        <required>true</required>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Pending</fullName>
+                    <default>true</default>
+                    <label>Pending</label>
+                </value>
+                <value>
+                    <fullName>In Progress</fullName>
+                    <default>false</default>
+                    <label>In Progress</label>
+                </value>
+                <value>
+                    <fullName>Succeeded</fullName>
+                    <default>false</default>
+                    <label>Succeeded</label>
+                </value>
+                <value>
+                    <fullName>Failed</fullName>
+                    <default>false</default>
+                    <label>Failed</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Error_Message__c</fullName>
+        <label>Error Message</label>
+        <type>LongTextArea</type>
+        <length>32000</length>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>File_Size__c</fullName>
+        <label>File Size (Bytes)</label>
+        <type>Number</type>
+        <precision>18</precision>
+        <scale>0</scale>
+        <required>false</required>
+    </fields>
+</CustomObject>

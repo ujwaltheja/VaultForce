@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Metadata Snapshot</label>
+    <pluralLabel>Metadata Snapshots</pluralLabel>
+    <nameField>
+        <displayFormat>SNAP-{0000000}</displayFormat>
+        <label>Snapshot Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>Private</sharingModel>
+    <enableActivities>true</enableActivities>
+    <enableReports>true</enableReports>
+    <enableHistory>true</enableHistory>
+    <fields>
+        <fullName>Salesforce_Org__c</fullName>
+        <label>Salesforce Org</label>
+        <type>MasterDetail</type>
+        <referenceTo>Salesforce_Org__c</referenceTo>
+        <relationshipLabel>Metadata Snapshots</relationshipLabel>
+        <relationshipName>Metadata_Snapshots</relationshipName>
+        <required>true</required>
+        <reparentableMasterDetail>false</reparentableMasterDetail>
+    </fields>
+    <fields>
+        <fullName>Snapshot_Type__c</fullName>
+        <label>Snapshot Type</label>
+        <type>Picklist</type>
+        <required>true</required>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>Manual</fullName>
+                    <default>false</default>
+                    <label>Manual</label>
+                </value>
+                <value>
+                    <fullName>Scheduled</fullName>
+                    <default>false</default>
+                    <label>Scheduled</label>
+                </value>
+                <value>
+                    <fullName>Pre-Deployment</fullName>
+                    <default>false</default>
+                    <label>Pre-Deployment</label>
+                </value>
+                <value>
+                    <fullName>Backup</fullName>
+                    <default>false</default>
+                    <label>Backup</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <label>Status</label>
+        <type>Picklist</type>
+        <required>true</required>
+        <valueSet>
+            <restricted>true</restricted>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value>
+                    <fullName>In Progress</fullName>
+                    <default>false</default>
+                    <label>In Progress</label>
+                </value>
+                <value>
+                    <fullName>Completed</fullName>
+                    <default>false</default>
+                    <label>Completed</label>
+                </value>
+                <value>
+                    <fullName>Failed</fullName>
+                    <default>false</default>
+                    <label>Failed</label>
+                </value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Component_Count__c</fullName>
+        <label>Component Count</label>
+        <type>Number</type>
+        <precision>10</precision>
+        <scale>0</scale>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Size_Bytes__c</fullName>
+        <label>Size (Bytes)</label>
+        <type>Number</type>
+        <precision>18</precision>
+        <scale>0</scale>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Snapshot_Data__c</fullName>
+        <label>Snapshot Data (JSON)</label>
+        <type>LongTextArea</type>
+        <length>131072</length>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Error_Message__c</fullName>
+        <label>Error Message</label>
+        <type>LongTextArea</type>
+        <length>32000</length>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Started_At__c</fullName>
+        <label>Started At</label>
+        <type>DateTime</type>
+        <required>false</required>
+    </fields>
+    <fields>
+        <fullName>Completed_At__c</fullName>
+        <label>Completed At</label>
+        <type>DateTime</type>
+        <required>false</required>
+    </fields>
+</CustomObject>
