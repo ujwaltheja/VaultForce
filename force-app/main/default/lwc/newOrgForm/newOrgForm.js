@@ -32,6 +32,10 @@ export default class NewOrgForm extends LightningElement {
         return this.orgName && this.orgType && this.instanceUrl && this.isValidUrl(this.instanceUrl);
     }
 
+    get isButtonDisabled() {
+        return !this.isFormValid;
+    }
+
     isValidUrl(url) {
         try {
             new URL(url);
