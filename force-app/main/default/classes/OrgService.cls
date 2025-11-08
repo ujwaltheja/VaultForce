@@ -406,46 +406,119 @@ public with sharing class OrgService {
     }
 
     /**
-     * @description Gets OAuth client ID from custom settings or environment
-     * Update this method with your actual OAuth credentials
+     * @description Retrieves OAuth configuration from Custom Metadata Type
+     * NOTE: Requires OAuth_Config__mdt Custom Metadata Type to be created in Setup (Step 2A in OAUTH_SETUP.md)
+     * @return OAuth configuration or null if not found
+     * @throws AuraHandledException if CMT doesn't exist
      */
-    private static String getClientId() {
-        // TODO: Replace with actual OAuth credentials from your Salesforce Connected App
-        // Option 1: Use Named Credentials (recommended for production)
-        // return [SELECT Endpoint FROM NamedCredential WHERE DeveloperName='SalesforceOAuth'].Endpoint;
-
-        // Option 2: Store in Custom Metadata Type (OAuth_Config__mdt)
-        // Option 3: Store in Custom Settings
-
-        // For development: use environment-specific values
-        String clientId = 'YOUR_OAUTH_CLIENT_ID_HERE';
-
-        if (String.isBlank(clientId) || clientId == 'YOUR_OAUTH_CLIENT_ID_HERE') {
+    private static OAuth_Config__mdt getOAuthConfig() {
+        try {
+            OAuth_Config__mdt config = [
+                SELECT Client_ID__c, Client_Secret__c, Is_Configured__c
+                FROM OAuth_Config__mdt
+                WHERE DeveloperName = 'Default_Config'
+                LIMIT 1
+            ];
+            return config;
+        } catch (QueryException e) {
             throw new AuraHandledException(
-                'OAuth Client ID not configured. Please update getClientId() in OrgService.cls with your Connected App credentials.'
+                'OAuth_Config__mdt Custom Metadata Type not found. Create it by following Step 2A in OAUTH_SETUP.md'
             );
         }
-
-        return clientId;
     }
 
     /**
-     * @description Gets OAuth client secret from custom settings or environment
-     * Update this method with your actual OAuth credentials
+     * @description Validates if OAuth configuration is properly set up
+     * @return OAuth Configuration validation result with status and message
      */
-    private static String getClientSecret() {
-        // TODO: Replace with actual OAuth credentials from your Salesforce Connected App
-        // For security, it's recommended to use Named Credentials instead of storing secrets in code
+    @AuraEnabled
+    public static OAuthValidationResult validateOAuthConfiguration() {
+        OAuthValidationResult result = new OAuthValidationResult();
+        try {
+            OAuth_Config__mdt config = getOAuthConfig();
 
-        String clientSecret = 'YOUR_OAUTH_CLIENT_SECRET_HERE';
+            if (config == null) {
+                result.isConfigured = false;
+                result.message = 'OAuth configuration record not found. Follow OAUTH_SETUP.md Step 2B to create it.';
+                result.configStatus = 'MISSING';
+                return result;
+            }
 
-        if (String.isBlank(clientSecret) || clientSecret == 'YOUR_OAUTH_CLIENT_SECRET_HERE') {
+            // Validate credentials are not empty and don't contain placeholder text
+            boolean hasClientId = !String.isBlank(config.Client_ID__c) &&
+                                  !config.Client_ID__c.startsWith('UPDATE_WITH_');
+            boolean hasClientSecret = !String.isBlank(config.Client_Secret__c) &&
+                                      !config.Client_Secret__c.startsWith('UPDATE_WITH_');
+
+            result.isConfigured = hasClientId && hasClientSecret && config.Is_Configured__c;
+            result.hasClientId = hasClientId;
+            result.hasClientSecret = hasClientSecret;
+            result.isFlaggedAsConfigured = config.Is_Configured__c;
+
+            // Set appropriate status message
+            if (!hasClientId) {
+                result.message = 'OAuth Client ID is not configured.';
+                result.configStatus = 'MISSING_CLIENT_ID';
+            } else if (!hasClientSecret) {
+                result.message = 'OAuth Client Secret is not configured.';
+                result.configStatus = 'MISSING_CLIENT_SECRET';
+            } else if (!config.Is_Configured__c) {
+                result.message = 'OAuth credentials exist but "Is Configured" checkbox is not marked.';
+                result.configStatus = 'NOT_FLAGGED';
+            } else {
+                result.message = 'OAuth is properly configured.';
+                result.configStatus = 'CONFIGURED';
+            }
+
+        } catch (AuraHandledException e) {
+            result.isConfigured = false;
+            result.message = e.getMessage();
+            result.configStatus = 'ERROR';
+        } catch (Exception e) {
+            result.isConfigured = false;
+            result.message = 'Error validating OAuth configuration: ' + e.getMessage();
+            result.configStatus = 'ERROR';
+        }
+
+        return result;
+    }
+
+    /**
+     * @description Gets OAuth client ID from Custom Metadata Type
+     * Requires: OAuth_Config__mdt Custom Metadata Type with Default_Config record
+     * @return OAuth Client ID (Consumer Key)
+     * @throws AuraHandledException if not configured
+     */
+    private static String getClientId() {
+        OAuth_Config__mdt config = getOAuthConfig();
+
+        if (config == null || String.isBlank(config.Client_ID__c) ||
+            config.Client_ID__c.startsWith('UPDATE_WITH_')) {
             throw new AuraHandledException(
-                'OAuth Client Secret not configured. Please update getClientSecret() in OrgService.cls with your Connected App credentials.'
+                'OAuth Client ID is not configured. Update OAuth_Config__mdt.Default_Config with your Consumer Key. See OAUTH_SETUP.md Step 2B.'
             );
         }
 
-        return clientSecret;
+        return config.Client_ID__c;
+    }
+
+    /**
+     * @description Gets OAuth client secret from Custom Metadata Type
+     * Requires: OAuth_Config__mdt Custom Metadata Type with Default_Config record
+     * @return OAuth Client Secret (Consumer Secret)
+     * @throws AuraHandledException if not configured
+     */
+    private static String getClientSecret() {
+        OAuth_Config__mdt config = getOAuthConfig();
+
+        if (config == null || String.isBlank(config.Client_Secret__c) ||
+            config.Client_Secret__c.startsWith('UPDATE_WITH_')) {
+            throw new AuraHandledException(
+                'OAuth Client Secret is not configured. Update OAuth_Config__mdt.Default_Config with your Consumer Secret. See OAUTH_SETUP.md Step 2B.'
+            );
+        }
+
+        return config.Client_Secret__c;
     }
 
     // Inner classes
@@ -461,5 +534,14 @@ public with sharing class OrgService {
         @AuraEnabled public Boolean hasRefreshToken;
         @AuraEnabled public String status;
         @AuraEnabled public String message;
+    }
+
+    public class OAuthValidationResult {
+        @AuraEnabled public Boolean isConfigured;
+        @AuraEnabled public Boolean hasClientId;
+        @AuraEnabled public Boolean hasClientSecret;
+        @AuraEnabled public Boolean isFlaggedAsConfigured;
+        @AuraEnabled public String message;
+        @AuraEnabled public String configStatus; // CONFIGURED, MISSING, MISSING_CLIENT_ID, MISSING_CLIENT_SECRET, NOT_FLAGGED, ERROR
     }
 }
