@@ -5,7 +5,7 @@ export default class VaultForceNotification extends LightningElement {
     @api title = '';
     @api message = '';
     @api duration = 5000; // Auto-dismiss after 5 seconds
-    @api dismissible = true;
+    @api dismissible;
 
     showNotification = true;
     timeoutId;
