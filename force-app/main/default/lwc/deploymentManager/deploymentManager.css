@@ -446,6 +446,30 @@
     color: #7f1d1d;
 }
 
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    gap: 1.5rem;
+}
+
+.loading-spinner {
+    width: 64px;
+    height: 64px;
+    border: 6px solid #e5e7eb;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+    font-size: 1rem;
+    color: #6b7280;
+    font-weight: 700;
+}
+
 .modal-footer {
     padding: 1.5rem 2rem;
     border-top: 2px solid #f3f4f6;
@@ -531,6 +555,12 @@
     }
     100% {
         background-position: 30px 30px;
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
 }
 
