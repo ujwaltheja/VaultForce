@@ -30,7 +30,23 @@ public with sharing class PipelineService {
 
             query += ' ORDER BY CreatedDate DESC LIMIT 1000';
 
-            return Database.query(query);
+            List<SObject> records = Database.query(query);
+            List<Artifact> artifacts = new List<Artifact>();
+
+            for (SObject record : records) {
+                Artifact artifact = new Artifact();
+                artifact.id = record.Id;
+                artifact.name = (String) record.get('Name');
+                artifact.stage = (String) record.get('Stage__c');
+                artifact.status = (String) record.get('Status__c');
+                artifact.createdDate = (DateTime) record.get('CreatedDate');
+                artifact.componentCount = (Decimal) record.get('Component_Count__c');
+                artifact.sourceOrgId = (Id) record.get('Source_Org__c');
+                artifact.targetOrgId = (Id) record.get('Target_Org__c');
+                artifacts.add(artifact);
+            }
+
+            return artifacts;
         } catch (Exception e) {
             throw new AuraHandledException('Error retrieving artifacts: ' + e.getMessage());
         }
@@ -47,16 +63,19 @@ public with sharing class PipelineService {
     public static Artifact createArtifact(Id deploymentId, String artifactName, String sourceStage) {
         try {
             Artifact artifact = new Artifact();
-            artifact.Name = artifactName;
-            artifact.Stage__c = sourceStage;
-            artifact.Status__c = 'In Progress';
-            artifact.Deployment_ID__c = deploymentId;
+            artifact.name = artifactName;
+            artifact.stage = sourceStage;
+            artifact.status = 'In Progress';
+            artifact.deploymentId = deploymentId;
 
             // In production, would insert into custom object
             // insert artifact;
 
-            AuditService.log('Artifact Created', 'Pipeline_Artifact__c', deploymentId,
-                'Created artifact: ' + artifactName + ' in stage ' + sourceStage);
+            Map<String, Object> details = new Map<String, Object>{
+                'artifactName' => artifactName,
+                'stage' => sourceStage
+            };
+            AuditService.log('Artifact Created', 'Pipeline_Artifact__c', deploymentId, details);
 
             return artifact;
         } catch (Exception e) {
@@ -85,7 +104,7 @@ public with sharing class PipelineService {
             }
 
             // Move artifact to next stage
-            String currentStage = artifact.Stage__c;
+            String currentStage = artifact.stage;
             Integer currentIndex = PIPELINE_STAGES.indexOf(currentStage);
 
             if (currentIndex >= PIPELINE_STAGES.size() - 1) {
@@ -93,14 +112,17 @@ public with sharing class PipelineService {
             }
 
             String nextStage = PIPELINE_STAGES.get(currentIndex + 1);
-            artifact.Stage__c = nextStage;
-            artifact.Status__c = 'In Progress';
+            artifact.stage = nextStage;
+            artifact.status = 'In Progress';
 
             // In production, would update the record
             // update artifact;
 
-            AuditService.log('Artifact Promoted', 'Pipeline_Artifact__c', artifactId,
-                'Promoted from ' + currentStage + ' to ' + nextStage);
+            Map<String, Object> details = new Map<String, Object>{
+                'fromStage' => currentStage,
+                'toStage' => nextStage
+            };
+            AuditService.log('Artifact Promoted', 'Pipeline_Artifact__c', artifactId, details);
 
             return artifact;
         } catch (AuraHandledException e) {
@@ -125,9 +147,9 @@ public with sharing class PipelineService {
                 throw new AuraHandledException('Artifact not found');
             }
 
-            artifact.Status__c = 'Approved';
-            artifact.Approver_Comments__c = approverComments;
-            artifact.Approved_Date__c = System.now();
+            artifact.status = 'Approved';
+            artifact.approverComments = approverComments;
+            artifact.approvedDate = System.now();
 
             // In production, would update the record
             // update artifact;
@@ -135,8 +157,11 @@ public with sharing class PipelineService {
             result.success = true;
             result.message = 'Artifact approved successfully';
 
-            AuditService.log('Artifact Approved', 'Pipeline_Artifact__c', artifactId,
-                'Approved by ' + UserInfo.getName() + '. Comments: ' + approverComments);
+            Map<String, Object> details = new Map<String, Object>{
+                'approver' => UserInfo.getName(),
+                'comments' => approverComments
+            };
+            AuditService.log('Artifact Approved', 'Pipeline_Artifact__c', artifactId, details);
 
         } catch (Exception e) {
             result.success = false;
@@ -161,8 +186,8 @@ public with sharing class PipelineService {
                 throw new AuraHandledException('Artifact not found');
             }
 
-            artifact.Status__c = 'Rejected';
-            artifact.Rejection_Reason__c = rejectionReason;
+            artifact.status = 'Rejected';
+            artifact.rejectionReason = rejectionReason;
 
             // In production, would update the record
             // update artifact;
@@ -170,8 +195,11 @@ public with sharing class PipelineService {
             result.success = true;
             result.message = 'Artifact rejected';
 
-            AuditService.log('Artifact Rejected', 'Pipeline_Artifact__c', artifactId,
-                'Rejected by ' + UserInfo.getName() + '. Reason: ' + rejectionReason);
+            Map<String, Object> details = new Map<String, Object>{
+                'rejectedBy' => UserInfo.getName(),
+                'reason' => rejectionReason
+            };
+            AuditService.log('Artifact Rejected', 'Pipeline_Artifact__c', artifactId, details);
 
         } catch (Exception e) {
             result.success = false;
@@ -191,22 +219,22 @@ public with sharing class PipelineService {
         result.passed = true;
 
         // Gate 1: Validation result
-        if (artifact.Validation_Status__c == 'Failed') {
+        if (artifact.validationStatus == 'Failed') {
             result.passed = false;
             result.failureReason = 'Validation failed';
             return result;
         }
 
         // Gate 2: Test coverage
-        if (artifact.Test_Coverage__c != null && artifact.Test_Coverage__c < 75) {
+        if (artifact.testCoverage != null && artifact.testCoverage < 75) {
             result.passed = false;
             result.failureReason = 'Test coverage below 75%';
             return result;
         }
 
         // Gate 3: Approval status (if in UAT or Production)
-        String stage = artifact.Stage__c;
-        if ((stage == 'UAT' || stage == 'Production') && artifact.Status__c != 'Approved') {
+        String stage = artifact.stage;
+        if ((stage == 'UAT' || stage == 'Production') && artifact.status != 'Approved') {
             result.passed = false;
             result.failureReason = 'Artifact must be approved before promotion';
             return result;
@@ -237,20 +265,20 @@ public with sharing class PipelineService {
      * @description Represents a pipeline artifact
      */
     public class Artifact {
-        @AuraEnabled public Id Id;
-        @AuraEnabled public String Name;
-        @AuraEnabled public String Stage__c;
-        @AuraEnabled public String Status__c;
-        @AuraEnabled public DateTime CreatedDate;
-        @AuraEnabled public Decimal Component_Count__c;
-        @AuraEnabled public Id Source_Org__c;
-        @AuraEnabled public Id Target_Org__c;
-        @AuraEnabled public Id Deployment_ID__c;
-        @AuraEnabled public String Approver_Comments__c;
-        @AuraEnabled public DateTime Approved_Date__c;
-        @AuraEnabled public String Rejection_Reason__c;
-        @AuraEnabled public String Validation_Status__c;
-        @AuraEnabled public Decimal Test_Coverage__c;
+        @AuraEnabled public Id id;
+        @AuraEnabled public String name;
+        @AuraEnabled public String stage;
+        @AuraEnabled public String status;
+        @AuraEnabled public DateTime createdDate;
+        @AuraEnabled public Decimal componentCount;
+        @AuraEnabled public Id sourceOrgId;
+        @AuraEnabled public Id targetOrgId;
+        @AuraEnabled public Id deploymentId;
+        @AuraEnabled public String approverComments;
+        @AuraEnabled public DateTime approvedDate;
+        @AuraEnabled public String rejectionReason;
+        @AuraEnabled public String validationStatus;
+        @AuraEnabled public Decimal testCoverage;
     }
 
     /**

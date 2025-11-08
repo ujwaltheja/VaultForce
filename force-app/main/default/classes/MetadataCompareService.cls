@@ -41,12 +41,13 @@ public with sharing class MetadataCompareService {
             result.success = true;
 
             // Log comparison
-            AuditService.log(
-                'Metadata Comparison',
-                'Salesforce_Org__c',
-                sourceOrgId,
-                'Compared ' + sourceOrg.Name + ' to ' + targetOrg.Name + ': ' + result.totalDiffs + ' differences'
-            );
+            Map<String, Object> details = new Map<String, Object>{
+                'sourceOrgName' => sourceOrg.Name,
+                'targetOrgName' => targetOrg.Name,
+                'differences' => result.totalDiffs,
+                'metadataTypes' => String.join(metadataTypes, ', ')
+            };
+            AuditService.log('Metadata Comparison', 'Salesforce_Org__c', sourceOrgId, details);
 
         } catch (AuraHandledException e) {
             result.success = false;

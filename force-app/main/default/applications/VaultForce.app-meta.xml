@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <brand>
+        <headerColor>#0070D2</headerColor>
+        <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
+    </brand>
+    <description>VaultForce - Salesforce Native Deployment Management Platform</description>
+    <formFactors>Small</formFactors>
+    <formFactors>Large</formFactors>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <label>VaultForce</label>
+    <navType>Standard</navType>
+    <tabs>standard-Home</tabs>
+    <tabs>Salesforce_Org__c</tabs>
+    <tabs>Metadata_Snapshot__c</tabs>
+    <tabs>Deployment__c</tabs>
+    <tabs>Pipeline__c</tabs>
+    <tabs>Audit_Log__c</tabs>
+    <uiType>Lightning</uiType>
+</CustomApplication>
