@@ -104,6 +104,16 @@
                     <label>Inactive</label>
                 </value>
                 <value>
+                    <fullName>Not Authenticated</fullName>
+                    <default>false</default>
+                    <label>Not Authenticated</label>
+                </value>
+                <value>
+                    <fullName>Token Expired</fullName>
+                    <default>false</default>
+                    <label>Token Expired</label>
+                </value>
+                <value>
                     <fullName>Error</fullName>
                     <default>false</default>
                     <label>Error</label>
