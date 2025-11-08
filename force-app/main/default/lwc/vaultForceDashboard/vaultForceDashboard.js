@@ -39,7 +39,9 @@ export default class VaultForceDashboard extends LightningElement {
             this.recentDeployments = data.slice(0, 5).map(deployment => ({
                 ...deployment,
                 targetOrgName: deployment.Target_Org__r ? deployment.Target_Org__r.Name : 'N/A',
-                statusClass: this.getStatusClass(deployment.Status__c)
+                statusClass: this.getStatusClass(deployment.Status__c),
+                deploymentItemClass: this.getDeploymentItemClass(deployment.Status__c),
+                statusBadgeClass: this.getStatusBadgeClass(deployment.Status__c)
             }));
 
             this.isLoading = false;
@@ -68,6 +70,34 @@ export default class VaultForceDashboard extends LightningElement {
                 return 'slds-text-color_default';
             default:
                 return '';
+        }
+    }
+
+    getDeploymentItemClass(status) {
+        const baseClass = 'deployment-item';
+        switch (status) {
+            case 'Completed':
+                return `${baseClass} completed`;
+            case 'Failed':
+                return `${baseClass} failed`;
+            case 'In Progress':
+                return `${baseClass} in-progress`;
+            default:
+                return baseClass;
+        }
+    }
+
+    getStatusBadgeClass(status) {
+        const baseClass = 'status-badge';
+        switch (status) {
+            case 'Completed':
+                return `${baseClass} completed`;
+            case 'Failed':
+                return `${baseClass} failed`;
+            case 'In Progress':
+                return `${baseClass} in-progress`;
+            default:
+                return baseClass;
         }
     }
 
